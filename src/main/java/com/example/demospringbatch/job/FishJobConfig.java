@@ -5,6 +5,7 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
@@ -16,17 +17,18 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 
 @Configuration
-public class FishJob {
+public class FishJobConfig {
     // BEAN READER
     // CSV READER
     @Bean
     public FlatFileItemReader<Fish> reader() {
-        FlatFileItemReaderBuilder<Fish> fishFlatFileItemReaderBuilder = new FlatFileItemReaderBuilder<>();
-        fishFlatFileItemReaderBuilder.name("fishItemReader");
-        fishFlatFileItemReaderBuilder.resource(new ClassPathResource("input/fish.csv"));
-        fishFlatFileItemReaderBuilder.delimited().names(new String[]{"", "", ""});
-        fishFlatFileItemReaderBuilder.targetType(Fish.class);
-        return fishFlatFileItemReaderBuilder.build();
+        return new FlatFileItemReaderBuilder<Fish>()
+                        .name("fishItemReader")
+                        .resource(new ClassPathResource("input/fish.csv"))
+                        .delimited()
+                        .names(new String[]{"name", "sizeMin", "sizeMax"})
+                        .targetType(Fish.class)
+                        .build();
     }
 
     // BEAN PROCESSOR
@@ -40,7 +42,7 @@ public class FishJob {
     public FlatFileItemWriter<String> writer(){
         return new FlatFileItemWriterBuilder<String>()
                 .name("fishItemWriter")
-                .resource(new FileSystemResource("output/fishOut.csv"))
+                .resource(new FileSystemResource("src/main/resources/output/fishOut.csv"))
                 .lineAggregator(new PassThroughLineAggregator<>())
                 .build();
     }
@@ -49,18 +51,17 @@ public class FishJob {
     @Bean
     public Step fishJobStep(StepBuilderFactory stepBuilderFactory){
         return stepBuilderFactory.get("fishJobStep")
-                .chunk(10)
+                .<Fish,String>chunk(10)
                 .reader(reader())
-                .processor(this.processor())
+                .processor(processor())
                 .writer(writer())
                 .build();
-
     }
 
     // BEAN JOB
     @Bean
     public Job fishJob(JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory){
-        return jobBuilderFactory.get("fishJob")
+        return jobBuilderFactory.get("myFishJob")
                 .start(fishJobStep(stepBuilderFactory))
                 .build();
     }

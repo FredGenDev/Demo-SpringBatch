@@ -11,7 +11,7 @@ public class FishItemProcessor implements ItemProcessor<Fish,String> {
 
     @Override
     public String process(Fish fish) throws Exception {
-        String retStr = "Name = " + fish.getName() + " -- taille min = " + fish.getSizeMin() + " -- taille max = " + fish.getSizeMax();
+        String retStr = "Name=" + fish.getName() + ",TailleMin=" + fish.getSizeMin() + ",TailleMax=" + fish.getSizeMax();
         LOGGER.info("{}",retStr);
         return retStr;
     }
